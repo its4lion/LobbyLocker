@@ -3,6 +3,12 @@ name: Publish Updater Manifest
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published stable release tag (for example, v0.0.1)
+        required: true
+        type: string
 
 concurrency:
   group: updater-manifest
@@ -14,20 +20,23 @@ permissions:
 jobs:
   publish:
     name: Publish signed update feed
-    if: startsWith(github.event.release.tag_name, 'v') && !github.event.release.prerelease
+    if: >-
+      startsWith(github.event.release.tag_name || inputs.tag, 'v') &&
+      (github.event_name == 'workflow_dispatch' || !github.event.release.prerelease)
     runs-on: ubuntu-24.04
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       - name: Download published release assets
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
         run: |
           mkdir release-assets
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" > release.json
           gh release download "${TAG}" --repo "${GITHUB_REPOSITORY}" --dir release-assets
 
       - name: Create updater manifest
         env:
-          RELEASE_JSON: ${{ toJSON(github.event.release) }}
           REPOSITORY: ${{ github.repository }}
         shell: bash
         run: |
@@ -35,7 +44,10 @@ jobs:
           const fs = require("node:fs");
           const path = require("node:path");
 
-          const release = JSON.parse(process.env.RELEASE_JSON);
+          const release = JSON.parse(fs.readFileSync("release.json", "utf8"));
+          if (release.draft || release.prerelease) {
+            throw new Error(`${release.tag_name} is not a published stable release`);
+          }
           const files = fs.readdirSync("release-assets");
           const one = (suffix) => {
             const matches = files.filter((file) => file.endsWith(suffix));
@@ -71,22 +83,23 @@ jobs:
       - name: Update public updater feed
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
         shell: bash
         run: |
           target=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha')
-          if gh release view updater >/dev/null 2>&1; then
-            gh release upload updater latest.json --clobber
+          if gh release view updater --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload updater latest.json --clobber --repo "${GITHUB_REPOSITORY}"
             gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/updater" \
               -f sha="${target}" \
               -F force=true >/dev/null
             gh release edit updater \
+              --repo "${GITHUB_REPOSITORY}" \
               --prerelease \
               --target "${target}" \
               --title "LobbyLocker Update Feed" \
               --notes "Machine-readable signed update metadata. Install LobbyLocker from a versioned release."
           else
             gh release create updater latest.json \
+              --repo "${GITHUB_REPOSITORY}" \
               --prerelease \
               --latest=false \
               --target "${target}" \
