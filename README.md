@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/its4lion/LobbyLocker/actions/workflows/tests.yml/badge.svg)](https://github.com/its4lion/LobbyLocker/actions/workflows/tests.yml)
 [![Clippy](https://github.com/its4lion/LobbyLocker/actions/workflows/clippy.yml/badge.svg)](https://github.com/its4lion/LobbyLocker/actions/workflows/clippy.yml)
-[![Release](https://img.shields.io/github/v/release/its4lion/LobbyLocker?include_prereleases)](https://github.com/its4lion/LobbyLocker/releases)
+[![Release](https://img.shields.io/github/v/release/its4lion/LobbyLocker)](https://github.com/its4lion/LobbyLocker/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 LobbyLocker is a game server region blocker for Windows and Linux. Choose the
@@ -10,7 +10,7 @@ regions you want to avoid, apply the changes, and LobbyLocker manages its own
 operating-system firewall rules.
 
 > [!WARNING]
-> LobbyLocker is in beta. Server addresses can change, Windows builds are
+> LobbyLocker is still in beta. Server addresses can change, Windows builds are
 > unsigned, and blocking a shared IP range can affect other applications.
 
 ## Features
@@ -33,7 +33,7 @@ Download a versioned build from [GitHub Releases](https://github.com/its4lion/Lo
 | Arch Linux                     | `.pkg.tar.zst` package |
 | Other compatible Linux systems | AppImage (best effort) |
 
-Windows SmartScreen may warn because beta builds are not code-signed. Linux
+Windows SmartScreen may warn because Windows builds are not code-signed. Linux
 requires `nftables`, `pkexec`, and a working desktop polkit agent.
 
 Windows installers and AppImages check for signed versioned updates when the app

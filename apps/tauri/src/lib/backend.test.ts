@@ -66,7 +66,7 @@ describe("native bridge", () => {
     const loaded = emptyRead();
     loaded.selfUpdateSupported = true;
     const update = {
-      version: "0.1.0-beta.2",
+      version: "0.0.2",
       body: "Security and reliability fixes.",
       close: vi.fn(),
       downloadAndInstall: vi.fn(),
@@ -81,7 +81,7 @@ describe("native bridge", () => {
 
     const app = new Backend();
     await app.initialize();
-    await vi.waitFor(() => expect(app.updateVersion).toBe("0.1.0-beta.2"));
+    await vi.waitFor(() => expect(app.updateVersion).toBe("0.0.2"));
     expect(update.downloadAndInstall).not.toHaveBeenCalled();
 
     await app.installUpdate();

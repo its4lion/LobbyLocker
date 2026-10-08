@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version without the v prefix (for example, 0.1.0-beta.1)
+        description: Version without the v prefix (for example, 0.0.1)
         required: true
         type: string
 
@@ -23,70 +23,49 @@ jobs:
   validate:
     name: Validate version
     runs-on: ubuntu-24.04
-    outputs:
-      prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - uses: dtolnay/rust-toolchain@1.90.0
-      - run: pnpm install --frozen-lockfile
       - name: Validate all version metadata
-        id: version
         shell: bash
         run: |
-          node <<'NODE'
-          const fs = require("node:fs");
-          const { execFileSync } = require("node:child_process");
+          python3 <<'PY'
+          import json
+          import os
+          import re
+          import tomllib
 
-          const version = process.env.VERSION;
-          const semver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
-          if (!semver.test(version)) {
-            throw new Error(`Invalid semantic version: ${version}`);
-          }
+          version = os.environ["VERSION"]
+          if not re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", version):
+              raise SystemExit(f"Invalid stable semantic version: {version}")
 
-          const jsonVersions = [
-            "package.json",
-            "apps/tauri/package.json",
-            "packages/ui/package.json",
-            "apps/tauri/src-tauri/tauri.conf.json",
-          ];
-          for (const file of jsonVersions) {
-            const actual = JSON.parse(fs.readFileSync(file, "utf8")).version;
-            if (actual !== version) {
-              throw new Error(`${file} has version ${actual}, expected ${version}`);
-            }
-          }
+          json_files = [
+              "package.json",
+              "apps/tauri/package.json",
+              "packages/ui/package.json",
+              "apps/tauri/src-tauri/tauri.conf.json",
+          ]
+          for file in json_files:
+              with open(file, "rb") as handle:
+                  actual = json.load(handle)["version"]
+              if actual != version:
+                  raise SystemExit(f"{file} has version {actual}, expected {version}")
 
-          const metadata = JSON.parse(
-            execFileSync(
-              "cargo",
-              ["metadata", "--format-version", "1", "--locked", "--no-deps"],
-              { encoding: "utf8" },
-            ),
-          );
-          const workspacePackages = metadata.packages.filter((pkg) =>
-            ["lobbylocker-core", "lobbylocker-tauri"].includes(pkg.name),
-          );
-          if (workspacePackages.length !== 2) {
-            throw new Error("Could not find both LobbyLocker Rust workspace packages");
-          }
-          for (const pkg of workspacePackages) {
-            if (pkg.version !== version) {
-              throw new Error(`${pkg.name} has version ${pkg.version}, expected ${version}`);
-            }
-          }
+          with open("Cargo.toml", "rb") as handle:
+              actual = tomllib.load(handle)["workspace"]["package"]["version"]
+          if actual != version:
+              raise SystemExit(f"Cargo.toml has version {actual}, expected {version}")
 
-          fs.appendFileSync(
-            process.env.GITHUB_OUTPUT,
-            `prerelease=${version.includes("-")}\n`,
-          );
-          NODE
+          with open("Cargo.lock", "rb") as handle:
+              packages = tomllib.load(handle)["package"]
+          workspace = {
+              package["name"]: package["version"]
+              for package in packages
+              if package["name"] in {"lobbylocker-core", "lobbylocker-tauri"}
+          }
+          expected = {"lobbylocker-core": version, "lobbylocker-tauri": version}
+          if workspace != expected:
+              raise SystemExit(f"Cargo.lock workspace versions are {workspace}, expected {expected}")
+          PY
       - name: Ensure the tag and release do not exist
         env:
           GH_TOKEN: ${{ github.token }}
@@ -282,7 +261,7 @@ jobs:
       - name: Build package-managed DEB
         run: >-
           pnpm --filter @lobbylocker/tauri exec tauri build --bundles deb
-          --config apps/tauri/src-tauri/tauri.no-updater-artifacts.conf.json
+          --config src-tauri/tauri.no-updater-artifacts.conf.json
       - uses: actions/upload-artifact@v7
         with:
           name: ubuntu-deb
@@ -334,7 +313,6 @@ jobs:
       - name: Create tag and draft release
         env:
           GH_TOKEN: ${{ github.token }}
-          PRERELEASE: ${{ needs.validate.outputs.prerelease }}
         shell: bash
         run: |
           args=(
@@ -345,7 +323,4 @@ jobs:
             --target "${GITHUB_SHA}"
             --title "LobbyLocker v${VERSION}"
           )
-          if [ "${PRERELEASE}" = "true" ]; then
-            args+=(--prerelease)
-          fi
           gh release create "${args[@]}"
