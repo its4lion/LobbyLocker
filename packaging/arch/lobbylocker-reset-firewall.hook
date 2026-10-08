@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Remove
+Type = Package
+Target = lobbylocker
+
+[Action]
+Description = Removing LobbyLocker-owned firewall rules...
+When = PreTransaction
+Exec = /usr/bin/lobbylocker --reset-firewall
+AbortOnFail

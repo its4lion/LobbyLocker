@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "id": "overwatch2",
+  "name": "Overwatch 2",
+  "accent": "#f28b55",
+  "source": "https://www.gstatic.com/ipranges/cloud.json",
+  "updatedAt": null,
+  "note": "Google entries refresh directly from Google's public network feed and cover shared provider ranges, not verified Overwatch-only servers. Bundled Blizzard-owned ranges were ownership-checked with ARIN/RIPE on 2026-10-04; their Overwatch datacenter mapping is community-maintained, not an official Blizzard server list. Windows blocks only the selected game executable; Linux blocks system-wide. No probe IP is guessed from a subnet.",
+  "regions": [
+    {
+      "id": "blizzard-ams1",
+      "name": "Amsterdam · Blizzard network",
+      "area": "Europe",
+      "probeTarget": null,
+      "endpoints": [
+        {
+          "id": "blizzard-ams1-0",
+          "address": "64.224.26.0/23",
+          "protocol": "any",
+          "ports": null,
+          "custom": false
+        }
+      ]
+    },
+    {
+      "id": "blizzard-ord1",
+      "name": "Chicago · Blizzard network",
+      "area": "North America",
+      "probeTarget": null,
+      "endpoints": [
+        {
+          "id": "blizzard-ord1-0",
+          "address": "64.224.0.0/21",
+          "protocol": "any",
+          "ports": null,
+          "custom": false
+        },
+        {
+          "id": "blizzard-ord1-1",
+          "address": "24.105.40.0/21",
+          "protocol": "any",
+          "ports": null,
+          "custom": false
+        }
+      ]
+    },
+    {
+      "id": "blizzard-las1",
+      "name": "US Southwest · Blizzard network",
+      "area": "North America",
+      "probeTarget": null,
+      "endpoints": [
+        {
+          "id": "blizzard-las1-0",
+          "address": "64.224.24.0/23",
+          "protocol": "any",
+          "ports": null,
+          "custom": false
+        }
+      ]
+    },
+    {
+      "id": "blizzard-syd2",
+      "name": "Sydney · Blizzard network",
+      "area": "Oceania",
+      "probeTarget": null,
+      "endpoints": [
+        {
+          "id": "blizzard-syd2-0",
+          "address": "158.115.196.0/23",
+          "protocol": "any",
+          "ports": null,
+          "custom": false
+        }
+      ]
+    },
+    {
+      "id": "blizzard-tpe1",
+      "name": "Taiwan · Blizzard network",
+      "area": "Asia",
+      "probeTarget": null,
+      "endpoints": [
+        {
+          "id": "blizzard-tpe1-0",
+          "address": "5.42.160.0/22",
+          "protocol": "any",
+          "ports": null,
+          "custom": false
+        },
+        {
+          "id": "blizzard-tpe1-1",
+          "address": "5.42.164.0/22",
+          "protocol": "any",
+          "ports": null,
+          "custom": false
+        }
+      ]
+    },
+    {
+      "id": "gcp-europe-north1",
+      "name": "Finland · Google Cloud",
+      "area": "Europe",
+      "providerScope": "europe-north1",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-europe-west4",
+      "name": "Netherlands · Google Cloud",
+      "area": "Europe",
+      "providerScope": "europe-west4",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-me-central2",
+      "name": "Saudi Arabia · Google Cloud",
+      "area": "Middle East",
+      "providerScope": "me-central2",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-me-central1",
+      "name": "Qatar · Google Cloud",
+      "area": "Middle East",
+      "providerScope": "me-central1",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-us-east4",
+      "name": "Virginia · Google Cloud",
+      "area": "North America",
+      "providerScope": "us-east4",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-us-west2",
+      "name": "Los Angeles · Google Cloud",
+      "area": "North America",
+      "providerScope": "us-west2",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-us-central1",
+      "name": "Iowa · Google Cloud",
+      "area": "North America",
+      "providerScope": "us-central1",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-southamerica-east1",
+      "name": "São Paulo · Google Cloud",
+      "area": "South America",
+      "providerScope": "southamerica-east1",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-asia-northeast1",
+      "name": "Tokyo · Google Cloud",
+      "area": "Asia",
+      "providerScope": "asia-northeast1",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-asia-southeast1",
+      "name": "Singapore · Google Cloud",
+      "area": "Asia",
+      "providerScope": "asia-southeast1",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-asia-east1",
+      "name": "Taiwan · Google Cloud",
+      "area": "Asia",
+      "providerScope": "asia-east1",
+      "probeTarget": null,
+      "endpoints": []
+    },
+    {
+      "id": "gcp-australia-southeast1",
+      "name": "Sydney · Google Cloud",
+      "area": "Oceania",
+      "providerScope": "australia-southeast1",
+      "probeTarget": null,
+      "endpoints": []
+    }
+  ]
+}

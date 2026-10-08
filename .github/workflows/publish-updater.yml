@@ -1,0 +1,95 @@
+name: Publish Updater Manifest
+
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: updater-manifest
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish signed update feed
+    if: startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download published release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mkdir release-assets
+          gh release download "${TAG}" --repo "${GITHUB_REPOSITORY}" --dir release-assets
+
+      - name: Create updater manifest
+        env:
+          RELEASE_JSON: ${{ toJSON(github.event.release) }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          const release = JSON.parse(process.env.RELEASE_JSON);
+          const files = fs.readdirSync("release-assets");
+          const one = (suffix) => {
+            const matches = files.filter((file) => file.endsWith(suffix));
+            if (matches.length !== 1) {
+              throw new Error(`Expected one ${suffix} asset, found: ${matches.join(", ")}`);
+            }
+            return matches[0];
+          };
+          const appImage = one(".AppImage");
+          const nsis = one(".exe");
+          const signature = (file) =>
+            fs.readFileSync(path.join("release-assets", `${file}.sig`), "utf8").trim();
+          const url = (file) =>
+            `https://github.com/${process.env.REPOSITORY}/releases/download/${release.tag_name}/${encodeURIComponent(file)}`;
+          const manifest = {
+            version: release.tag_name.replace(/^v/, ""),
+            notes: release.body || "",
+            pub_date: release.published_at,
+            platforms: {
+              "linux-x86_64": {
+                url: url(appImage),
+                signature: signature(appImage),
+              },
+              "windows-x86_64": {
+                url: url(nsis),
+                signature: signature(nsis),
+              },
+            },
+          };
+          fs.writeFileSync("latest.json", `${JSON.stringify(manifest, null, 2)}\n`);
+          NODE
+
+      - name: Update public updater feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        shell: bash
+        run: |
+          target=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha')
+          if gh release view updater >/dev/null 2>&1; then
+            gh release upload updater latest.json --clobber
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/updater" \
+              -f sha="${target}" \
+              -F force=true >/dev/null
+            gh release edit updater \
+              --prerelease \
+              --target "${target}" \
+              --title "LobbyLocker Update Feed" \
+              --notes "Machine-readable signed update metadata. Install LobbyLocker from a versioned release."
+          else
+            gh release create updater latest.json \
+              --prerelease \
+              --latest=false \
+              --target "${target}" \
+              --title "LobbyLocker Update Feed" \
+              --notes "Machine-readable signed update metadata. Install LobbyLocker from a versioned release."
+          fi

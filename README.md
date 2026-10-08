@@ -1,0 +1,133 @@
+# LobbyLocker
+
+[![Tests](https://github.com/its4lion/LobbyLocker/actions/workflows/tests.yml/badge.svg)](https://github.com/its4lion/LobbyLocker/actions/workflows/tests.yml)
+[![Clippy](https://github.com/its4lion/LobbyLocker/actions/workflows/clippy.yml/badge.svg)](https://github.com/its4lion/LobbyLocker/actions/workflows/clippy.yml)
+[![Release](https://img.shields.io/github/v/release/its4lion/LobbyLocker?include_prereleases)](https://github.com/its4lion/LobbyLocker/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+LobbyLocker is a game server region blocker for Windows and Linux. Choose the
+regions you want to avoid, apply the changes, and LobbyLocker manages its own
+operating-system firewall rules.
+
+> [!WARNING]
+> LobbyLocker is in beta. Server addresses can change, Windows builds are
+> unsigned, and blocking a shared IP range can affect other applications.
+
+## Features
+
+- Region blocking for Overwatch 2, Deadlock, and Counter-Strike 2
+- Custom games, regions, IP addresses, subnets, protocols, and ports
+- Installed-game discovery and custom library folders
+- Firewall status read directly from the operating system
+- Manual ping checks that never change selections or firewall rules
+- English and Arabic interfaces with right-to-left support
+
+## Download
+
+Download a versioned build from [GitHub Releases](https://github.com/its4lion/LobbyLocker/releases).
+
+| Platform | Package |
+| --- | --- |
+| Windows 11 | NSIS `.exe` installer |
+| Ubuntu 24.04 LTS | `.deb` package |
+| Arch Linux | `.pkg.tar.zst` package |
+| Other compatible Linux systems | AppImage (best effort) |
+
+Windows SmartScreen may warn because beta builds are not code-signed. Linux
+requires `nftables`, `pkexec`, and a working desktop polkit agent.
+
+The rolling [LobbyLocker Snapshot](https://github.com/its4lion/LobbyLocker/releases/tag/snapshot)
+contains automatic development builds from `main`. Snapshots may be unstable.
+
+Windows installers and AppImages check for signed versioned updates when the app
+opens and ask before installing. Ubuntu and Arch packages continue to update
+through their package files or package manager.
+
+## How to use
+
+1. Open LobbyLocker and choose a detected game or add a custom game.
+2. Select the regions you do **not** want to use.
+3. Click **Apply** and approve the operating-system permission prompt.
+
+Rules stay active after LobbyLocker closes. Use **Settings → Reset** to remove
+all LobbyLocker rules.
+
+## Important behavior
+
+- **Windows:** rules apply only to the exact game executable you select.
+- **Linux:** rules apply system-wide to the selected addresses.
+- LobbyLocker changes only its own firewall objects: `LobbyLocker.Managed.v1`
+  on Windows and `inet lobbylocker_v1` on Linux.
+- LobbyLocker does not modify game files, inject code, launch games, or route
+  traffic through another server.
+- Ping and connection scans are manual and never alter firewall rules.
+- Matchmaking can still choose an unexpected server, especially in a party.
+  Use a custom game—not the Overwatch practice range—when testing blocking.
+- There are no anti-cheat, matchmaking-region, or ranked-match guarantees.
+
+AppImages do not have an uninstaller. Run **Settings → Reset** before deleting
+one. The Windows, Ubuntu, and Arch uninstallers attempt to remove LobbyLocker
+rules before removing the application.
+
+## Games and server data
+
+LobbyLocker includes starter data for Overwatch 2, Deadlock, and CS2. Server
+lists can be incomplete or outdated, so every game can be edited locally.
+
+Each game is stored as a JSON file:
+
+- Linux: `~/.config/lobbylocker/games/`
+- Windows: `%APPDATA%\lobbylocker\games\`
+
+Existing game files are never overwritten automatically during an upgrade.
+Overwatch cloud ranges are provider-owned ranges, not an official Blizzard
+server list. LobbyLocker is not affiliated with Blizzard, Valve, or Google.
+
+## Troubleshooting
+
+| Problem | What to do |
+| --- | --- |
+| A game is missing | Use **Scan games**, add its library folder, or choose its executable. |
+| Firewall status cannot be read | Approve the permission prompt, then click **Retry**. |
+| A server still connects | Check the address list and test in a custom match. |
+| Another app loses connectivity on Linux | Shared addresses are blocked system-wide; change the selection or use **Reset**. |
+| Removing an AppImage | Use **Settings → Reset** first. |
+
+If the UI cannot open, an installed binary can remove owned rules with:
+
+```sh
+lobbylocker --reset-firewall
+```
+
+## Development
+
+LobbyLocker uses Tauri 2, Rust, Svelte 5, and TypeScript. Development requires
+Rust 1.90+, Node.js 22.12+, pnpm 10.17.1, and the
+[Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform.
+
+```sh
+pnpm install
+pnpm dev
+```
+
+Quality checks:
+
+```sh
+pnpm format:check
+pnpm check
+pnpm test
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
+## Release policy
+
+- Pushes to `main` run formatting, type checks, tests, and Clippy, then update
+  the rolling Snapshot prerelease.
+- **Prepare Release** builds Arch, Ubuntu, AppImage, and Windows packages and
+  creates a versioned draft for manual testing and publication.
+- Publishing a versioned release updates the signed Windows and AppImage update
+  feed. Installation always requires confirmation in the app.
+
+## License
+
+[MIT](LICENSE)

@@ -1,0 +1,25 @@
+# Release-automation recipe. The workflow stages an already-built binary and
+# bundled resources in payload/ before invoking makepkg.
+pkgname=lobbylocker
+pkgver=0.0.0
+pkgrel=1
+pkgdesc="Desktop game server blocker using nftables"
+arch=('x86_64')
+url="https://github.com/its4lion/LobbyLocker"
+license=('MIT')
+depends=('gtk3' 'webkit2gtk-4.1' 'librsvg' 'nftables' 'polkit')
+options=('!debug')
+
+package() {
+  install -Dm755 "$startdir/payload/lobbylocker" "$pkgdir/usr/bin/lobbylocker"
+  install -Dm644 "$startdir/payload/lobbylocker.desktop" \
+    "$pkgdir/usr/share/applications/lobbylocker.desktop"
+  install -Dm644 "$startdir/payload/lobbylocker.png" \
+    "$pkgdir/usr/share/icons/hicolor/512x512/apps/lobbylocker.png"
+  install -Dm644 "$startdir/payload/lobbylocker-reset-firewall.hook" \
+    "$pkgdir/usr/share/libalpm/hooks/lobbylocker-reset-firewall.hook"
+  install -Dm644 "$startdir/payload/LICENSE" \
+    "$pkgdir/usr/share/licenses/lobbylocker/LICENSE"
+  install -d "$pkgdir/usr/lib/lobbylocker"
+  cp -a "$startdir/payload/data" "$pkgdir/usr/lib/lobbylocker/data"
+}

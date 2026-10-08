@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "deadlock",
+  "name": "Deadlock",
+  "accent": "#b7bca9",
+  "source": "https://api.steampowered.com/ISteamApps/GetSDRConfig/v1/?appid=1422450",
+  "updatedAt": "2026-10-02",
+  "note": "Selected official Valve SDR locations, snapshot revision 1790374330. Refresh for all relay locations. Shared with CS2 and other Steam games. Relay latency is not necessarily match latency.",
+  "regions": [
+    {
+      "id": "ams", "name": "Amsterdam", "area": "Europe", "probeTarget": "155.133.248.36",
+      "endpoints": [
+        {"id": "ams-0", "address": "155.133.248.36", "protocol": "udp", "ports": "27015-27060"},
+        {"id": "ams-1", "address": "155.133.248.37", "protocol": "udp", "ports": "27015-27060"},
+        {"id": "ams-2", "address": "155.133.248.40", "protocol": "udp", "ports": "27015-27060"},
+        {"id": "ams-3", "address": "155.133.248.41", "protocol": "udp", "ports": "27015-27060"}
+      ]
+    },
+    {
+      "id": "iad", "name": "Virginia", "area": "North America", "probeTarget": "162.254.192.88",
+      "endpoints": [
+        {"id": "iad-0", "address": "162.254.192.88", "protocol": "udp", "ports": "27015-27140"},
+        {"id": "iad-1", "address": "162.254.192.89", "protocol": "udp", "ports": "27015-27140"},
+        {"id": "iad-2", "address": "162.254.192.102", "protocol": "udp", "ports": "27015-27140"},
+        {"id": "iad-3", "address": "162.254.192.103", "protocol": "udp", "ports": "27015-27140"}
+      ]
+    },
+    {
+      "id": "dxb", "name": "Dubai", "area": "Middle East", "probeTarget": "185.25.183.163",
+      "endpoints": [
+        {"id": "dxb-0", "address": "185.25.183.163", "protocol": "udp", "ports": "27015-27060"},
+        {"id": "dxb-1", "address": "185.25.183.179", "protocol": "udp", "ports": "27015-27060"}
+      ]
+    },
+    {
+      "id": "eze", "name": "Buenos Aires", "area": "South America", "probeTarget": "155.133.255.98",
+      "endpoints": [
+        {"id": "eze-0", "address": "155.133.255.98", "protocol": "udp", "ports": "27015-27060"},
+        {"id": "eze-1", "address": "155.133.255.99", "protocol": "udp", "ports": "27015-27060"},
+        {"id": "eze-2", "address": "155.133.255.162", "protocol": "udp", "ports": "27015-27060"},
+        {"id": "eze-3", "address": "155.133.255.163", "protocol": "udp", "ports": "27015-27060"}
+      ]
+    },
+    {
+      "id": "syd", "name": "Sydney", "area": "Oceania", "probeTarget": "103.10.125.20",
+      "endpoints": [
+        {"id": "syd-0", "address": "103.10.125.20", "protocol": "udp", "ports": "27015-27140"},
+        {"id": "syd-1", "address": "103.10.125.21", "protocol": "udp", "ports": "27015-27140"},
+        {"id": "syd-2", "address": "103.10.125.40", "protocol": "udp", "ports": "27015-27140"},
+        {"id": "syd-3", "address": "103.10.125.41", "protocol": "udp", "ports": "27015-27140"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+[package]
+name = "lobbylocker-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+default-run = "lobbylocker"
+
+[[bin]]
+name = "lobbylocker"
+path = "src/bin/lobbylocker.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+ipnet.workspace = true
+uuid.workspace = true
+base64.workspace = true
+dirs.workspace = true
+tempfile.workspace = true
+fs2.workspace = true
+reqwest.workspace = true
+pelite = { version = "0.10", default-features = false, features = ["std"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "ico"] }
+roxmltree = "0.21"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_Storage_FileSystem", "Win32_System_IO", "Win32_System_Pipes", "Win32_System_SystemInformation", "Win32_System_Threading"] }

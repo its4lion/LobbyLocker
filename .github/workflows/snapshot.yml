@@ -1,0 +1,259 @@
+name: Snapshot
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: snapshot-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  quality-gate:
+    name: Wait for required checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Wait for push checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          required=("Format Check" "Typecheck" "Tests" "Clippy")
+          while true; do
+            waiting=false
+            for workflow in "${required[@]}"; do
+              result=$(gh run list \
+                --repo "${GITHUB_REPOSITORY}" \
+                --workflow "${workflow}" \
+                --commit "${SHA}" \
+                --limit 1 \
+                --json status,conclusion \
+                --jq '.[0] | [.status, .conclusion] | @tsv')
+
+              if [ -z "${result}" ]; then
+                echo "${workflow}: waiting for run to start"
+                waiting=true
+                continue
+              fi
+
+              read -r status conclusion <<<"${result}"
+              if [ "${status}" != "completed" ]; then
+                echo "${workflow}: ${status}"
+                waiting=true
+              elif [ "${conclusion}" != "success" ]; then
+                echo "${workflow} failed with conclusion: ${conclusion}" >&2
+                exit 1
+              else
+                echo "${workflow}: passed"
+              fi
+            done
+
+            if [ "${waiting}" = false ]; then
+              break
+            fi
+            sleep 20
+          done
+
+  build-arch:
+    name: Build Arch package
+    needs: quality-gate
+    runs-on: ubuntu-24.04
+    container: archlinux:base-devel
+    steps:
+      - name: Install build dependencies
+        run: pacman -Syu --noconfirm git gtk3 webkit2gtk-4.1 librsvg pkgconf nodejs pnpm rustup nftables polkit namcap
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain
+        run: rustup default 1.90.0
+      - run: pnpm install --frozen-lockfile
+      - name: Build release executable
+        run: pnpm --filter @lobbylocker/tauri exec tauri build --no-bundle
+      - name: Build and inspect pacman package
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          package_root="${RUNNER_TEMP}/lobbylocker-arch"
+          install -d "${package_root}/payload"
+          install -Dm755 target/release/lobbylocker "${package_root}/payload/lobbylocker"
+          cp -a data "${package_root}/payload/data"
+          install -Dm644 apps/tauri/src-tauri/icons/icon.png "${package_root}/payload/lobbylocker.png"
+          install -Dm644 packaging/arch/lobbylocker.desktop "${package_root}/payload/lobbylocker.desktop"
+          install -Dm644 packaging/arch/lobbylocker-reset-firewall.hook "${package_root}/payload/lobbylocker-reset-firewall.hook"
+          install -Dm644 LICENSE "${package_root}/payload/LICENSE"
+          cp packaging/arch/PKGBUILD.release "${package_root}/PKGBUILD"
+          if [[ "${version}" == *-* ]]; then
+            arch_version="${version%%-*}pre.${version#*-}"
+            arch_version="${arch_version%%+*}"
+            arch_version="${arch_version//-/.}"
+          else
+            arch_version="${version%%+*}"
+          fi
+          sed -i "s/^pkgver=.*/pkgver=${arch_version}/" "${package_root}/PKGBUILD"
+          useradd --create-home builder
+          chown -R builder:builder "${package_root}"
+          runuser -u builder -- bash -lc "cd '${package_root}' && makepkg --noconfirm"
+          package_file=$(find "${package_root}" -maxdepth 1 -name '*.pkg.tar.zst' -type f -print -quit)
+          test -n "${package_file}"
+          namcap "${package_root}/PKGBUILD"
+          namcap "${package_file}"
+          mkdir -p snapshot-assets
+          cp "${package_file}" snapshot-assets/
+      - uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-arch
+          path: snapshot-assets/*.pkg.tar.zst
+          if-no-files-found: error
+
+  build-ubuntu:
+    name: Build Ubuntu 24.04 DEB
+    needs: quality-gate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev librsvg2-dev patchelf
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: Swatinem/rust-cache@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @lobbylocker/tauri exec tauri build --bundles deb
+      - uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-ubuntu-deb
+          path: target/release/bundle/deb/*.deb
+          if-no-files-found: error
+
+  build-appimage:
+    name: Build AppImage
+    needs: quality-gate
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev librsvg2-dev patchelf
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: Swatinem/rust-cache@v2
+      - run: pnpm install --frozen-lockfile
+      - name: Build unsigned development AppImage
+        run: >-
+          pnpm --filter @lobbylocker/tauri exec tauri build --bundles appimage
+          --config '{"bundle":{"createUpdaterArtifacts":false}}'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-appimage
+          path: target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows NSIS installer
+    needs: quality-gate
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: Swatinem/rust-cache@v2
+      - run: pnpm install --frozen-lockfile
+      - name: Build unsigned development NSIS installer
+        run: >-
+          pnpm --filter @lobbylocker/tauri exec tauri build --bundles nsis
+          --config '{"bundle":{"createUpdaterArtifacts":false}}'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-windows-nsis
+          path: target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+  publish:
+    name: Publish rolling snapshot
+    needs: [build-arch, build-ubuntu, build-appimage, build-windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: snapshot-*
+          path: snapshot-assets
+          merge-multiple: true
+      - name: Create checksums and notes
+        shell: bash
+        run: |
+          (cd snapshot-assets && find . -maxdepth 1 -type f ! -name 'LobbyLocker-Snapshot-SHA256SUMS.txt' -printf '%f\0' | sort -z | xargs -0 sha256sum) > snapshot-assets/LobbyLocker-Snapshot-SHA256SUMS.txt
+          short_sha="${GITHUB_SHA::7}"
+          cat > snapshot-notes.md <<EOF
+          Automatic development build from commit [\`${short_sha}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}).
+
+          **Warning:** This snapshot may be unstable. Use a versioned release for normal installation.
+          EOF
+      - name: Publish snapshot prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view snapshot >/dev/null 2>&1; then
+            # Keep the existing release available while each replacement uploads.
+            # Remove the old checksum first and upload the new one last so it never
+            # describes a partially replaced set.
+            gh release delete-asset snapshot LobbyLocker-Snapshot-SHA256SUMS.txt --yes || true
+            find snapshot-assets -maxdepth 1 -type f ! -name 'LobbyLocker-Snapshot-SHA256SUMS.txt' -print0 \
+              | sort -z \
+              | xargs -0 gh release upload snapshot --clobber
+            mapfile -d '' expected_assets < <(find snapshot-assets -maxdepth 1 -type f -printf '%f\0')
+            while IFS= read -r asset; do
+              keep=false
+              for expected in "${expected_assets[@]}"; do
+                if [ "${asset}" = "${expected}" ]; then
+                  keep=true
+                  break
+                fi
+              done
+              if [ "${keep}" = false ]; then
+                gh release delete-asset snapshot "${asset}" --yes
+              fi
+            done < <(gh release view snapshot --json assets --jq '.assets[].name')
+            gh release upload snapshot snapshot-assets/LobbyLocker-Snapshot-SHA256SUMS.txt --clobber
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/snapshot" \
+              -f sha="${GITHUB_SHA}" \
+              -F force=true >/dev/null
+            gh release edit snapshot \
+              --prerelease \
+              --target "${GITHUB_SHA}" \
+              --title "LobbyLocker Snapshot" \
+              --notes-file snapshot-notes.md
+          else
+            if git ls-remote --exit-code --tags origin refs/tags/snapshot >/dev/null 2>&1; then
+              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/snapshot"
+            fi
+            gh release create snapshot snapshot-assets/* \
+              --prerelease \
+              --latest=false \
+              --target "${GITHUB_SHA}" \
+              --title "LobbyLocker Snapshot" \
+              --notes-file snapshot-notes.md
+          fi
