@@ -1,12 +1,12 @@
 # LobbyLocker
 
-[![Tests](https://github.com/its4lion/LobbyLocker/actions/workflows/tests.yml/badge.svg)](https://github.com/its4lion/LobbyLocker/actions/workflows/tests.yml)
-[![Clippy](https://github.com/its4lion/LobbyLocker/actions/workflows/clippy.yml/badge.svg)](https://github.com/its4lion/LobbyLocker/actions/workflows/clippy.yml)
-[![Release](https://img.shields.io/github/v/release/its4lion/LobbyLocker)](https://github.com/its4lion/LobbyLocker/releases)
+[![Tests](https://github.com/its4lion/LobbyLocker/actions/workflows/tests.yml/badge.svg)](https://github.com/its4lion/lobbylocker/actions/workflows/tests.yml)
+[![Clippy](https://github.com/its4lion/LobbyLocker/actions/workflows/clippy.yml/badge.svg)](https://github.com/its4lion/lobbylocker/actions/workflows/clippy.yml)
+[![Release](https://img.shields.io/github/v/release/its4lion/lobbylocker)](https://github.com/its4lion/lobbylocker/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 LobbyLocker is a game server region blocker for Windows and Linux. Choose the
-regions you want to avoid, apply the changes, and LobbyLocker manages its own
+regions you want to avoid, apply the changes, and lobbylocker manages its own
 operating-system firewall rules.
 
 > [!WARNING]
