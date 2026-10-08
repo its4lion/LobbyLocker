@@ -33,6 +33,15 @@ Download a versioned build from [GitHub Releases](https://github.com/its4lion/Lo
 | Arch Linux                     | `.pkg.tar.zst` package |
 | Other compatible Linux systems | AppImage (best effort) |
 
+> [!WARNING]
+> `lobbylocker-bin` is not available in the AUR yet because new AUR account
+> registration is currently disabled. Until it becomes available for `yay`,
+> install the downloaded Arch package directly:
+
+```sh
+sudo pacman -U ./lobbylocker-0.0.1-1-x86_64.pkg.tar.zst
+```
+
 Windows SmartScreen may warn because Windows builds are not code-signed. Linux
 requires `nftables`, `pkexec`, and a working desktop polkit agent.
 
