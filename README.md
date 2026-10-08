@@ -26,18 +26,15 @@ operating-system firewall rules.
 
 Download a versioned build from [GitHub Releases](https://github.com/its4lion/LobbyLocker/releases).
 
-| Platform | Package |
-| --- | --- |
-| Windows 11 | NSIS `.exe` installer |
-| Ubuntu 24.04 LTS | `.deb` package |
-| Arch Linux | `.pkg.tar.zst` package |
+| Platform                       | Package                |
+| ------------------------------ | ---------------------- |
+| Windows 11                     | NSIS `.exe` installer  |
+| Ubuntu 24.04 LTS               | `.deb` package         |
+| Arch Linux                     | `.pkg.tar.zst` package |
 | Other compatible Linux systems | AppImage (best effort) |
 
 Windows SmartScreen may warn because beta builds are not code-signed. Linux
 requires `nftables`, `pkexec`, and a working desktop polkit agent.
-
-The rolling [LobbyLocker Snapshot](https://github.com/its4lion/LobbyLocker/releases/tag/snapshot)
-contains automatic development builds from `main`. Snapshots may be unstable.
 
 Windows installers and AppImages check for signed versioned updates when the app
 opens and ask before installing. Ubuntu and Arch packages continue to update
@@ -85,13 +82,13 @@ server list. LobbyLocker is not affiliated with Blizzard, Valve, or Google.
 
 ## Troubleshooting
 
-| Problem | What to do |
-| --- | --- |
-| A game is missing | Use **Scan games**, add its library folder, or choose its executable. |
-| Firewall status cannot be read | Approve the permission prompt, then click **Retry**. |
-| A server still connects | Check the address list and test in a custom match. |
+| Problem                                 | What to do                                                                       |
+| --------------------------------------- | -------------------------------------------------------------------------------- |
+| A game is missing                       | Use **Scan games**, add its library folder, or choose its executable.            |
+| Firewall status cannot be read          | Approve the permission prompt, then click **Retry**.                             |
+| A server still connects                 | Check the address list and test in a custom match.                               |
 | Another app loses connectivity on Linux | Shared addresses are blocked system-wide; change the selection or use **Reset**. |
-| Removing an AppImage | Use **Settings → Reset** first. |
+| Removing an AppImage                    | Use **Settings → Reset** first.                                                  |
 
 If the UI cannot open, an installed binary can remove owned rules with:
 
@@ -118,15 +115,6 @@ pnpm check
 pnpm test
 cargo clippy --workspace --all-targets -- -D warnings
 ```
-
-## Release policy
-
-- Pushes to `main` run formatting, type checks, tests, and Clippy, then update
-  the rolling Snapshot prerelease.
-- **Prepare Release** builds Arch, Ubuntu, AppImage, and Windows packages and
-  creates a versioned draft for manual testing and publication.
-- Publishing a versioned release updates the signed Windows and AppImage update
-  feed. Installation always requires confirmation in the app.
 
 ## License
 
